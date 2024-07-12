@@ -9,7 +9,13 @@ from keras.layers import LSTM, Dense, Dropout, GRU
 from sklearn.metrics import roc_auc_score
 from tensorflow.python.keras import Sequential
 from tensorflow.python.keras.layers import LSTM, Dense
-from util import file_util
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+from util.file_util import find_indices_of_items_with_incorrect_size
+
+
+
 
 """
     Implement the RNN (Recurrent Neural Network) methods tailored including F_mapper(TDA5), F_snapshot(Raw) and GraphPulse data. 
@@ -55,7 +61,7 @@ def read_seq_data_by_file_name(network, file):
         dict: A dictionary containing the loaded sequence data.
     """
 
-    file_path = "Sequence/{}/".format(network)
+    file_path = "../../data/Sequences/{}/".format(network)
     seqData = dict()
     with open(file_path + file, 'rb') as f:
         seqData = pickle.load(f)
@@ -200,7 +206,7 @@ if __name__ == "__main__":
             print(f"RUN {run}")
             # for tdaVariable in tdaDifferentGraph:
             print("Working on {}\n".format(network))
-            data = read_seq_data_by_file_name(network, "seq_tda_ablation.txt")
+            data = read_seq_data_by_file_name(network, "seq_tda.txt")
             data_raw = read_seq_data_by_file_name(network, "seq_raw.txt")
 
             indxs = []
@@ -226,9 +232,9 @@ if __name__ == "__main__":
                                 indxs.append(i)
 
                     value = [item for index, item in enumerate(value) if index not in indxs]
-                    print(file_util.find_indices_of_items_with_incorrect_size(value))
+                    print(find_indices_of_items_with_incorrect_size(value))
                     np_labels = np.delete(np_labels, indxs)
-                    print(file_util.find_indices_of_items_with_incorrect_size(value))
+                    print(find_indices_of_items_with_incorrect_size(value))
                     np_data = np.array(value)
                     # auc_scores.append(LSTM_classifier(np_data, np_labels, key, network))
 
@@ -326,20 +332,4 @@ if __name__ == "__main__":
 
             auc_scores.append(LSTM_classifier(concatenated_arr_normalized, np_labels, "GraphPulse", network))
 
-            # # run the combined version
-            auc_scores.append(LSTM_classifier(concatenated_arr, np_labels, "GraphPulse_not_normalized", network))
-
-            # #run the tda 5
-            auc_scores.append(LSTM_classifier(normalized_data_arr, np_labels, "TDA5", network))
-
-            # run the tda 3
-            auc_scores.append(LSTM_classifier(tda_3, np_labels, "TDA3", network))
-
-            # TDA 5 not normalized
-            auc_scores.append(LSTM_classifier(np_data, np_labels, "TDA5_not_normalized", network))
-
-            # Raw
-            auc_scores.append(LSTM_classifier(normalized_raw_data_arr, np_labels, "Raw", network))
-
-            # Raw not normilized
-            auc_scores.append(LSTM_classifier(np_data_raw, np_labels, "Raw_not_normalized", network))
+           
