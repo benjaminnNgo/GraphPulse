@@ -14,6 +14,11 @@ import kmapper as km
 import sklearn
 from sklearn.preprocessing import MinMaxScaler
 import pickle
+import sys
+import warnings
+warnings.filterwarnings("ignore")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from util.graph_util import from_networkx
 
 '''
@@ -1542,4 +1547,5 @@ class NetworkParser:
 
 if __name__ == '__main__':
     np = NetworkParser()
-    np.graph_creation_handler_time_series()
+    # np.graph_creation_handler_time_series()
+    np.create_time_series_rnn_sequence("networkadex.txt")
