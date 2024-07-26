@@ -104,8 +104,11 @@ def LSTM_classifier(data, labels, spec, network):
     tf.random.set_seed(42)
     start_Rnn_training_time = time.time()
     # data_train, data_test, labels_train, labels_test = train_test_split(data, labels, test_size=0.2, random_state=42)
-    data_train, data_test = train_test_split_sequential(data, train_size=0.8)
-    labels_train, labels_test = train_test_split_sequential(labels, train_size=0.8)
+    data_train, data_test_val = train_test_split_sequential(data, train_size=0.7)
+    labels_train, labels_test_val = train_test_split_sequential(labels, train_size=0.7)
+
+    data_val, data_test = train_test_split_sequential(data_test_val, train_size=0.5)
+    labels_val, labels_test = train_test_split_sequential(labels_test_val, train_size=0.5)
 
     # Define the LSTM model
     model_LSTM = Sequential()
@@ -152,8 +155,8 @@ def LSTM_classifier(data, labels, spec, network):
 
     # Train the model
     # Create the AUCCallback and specify the validation data
-    auc_callback = AUCCallback(validation_data=(data_test, labels_test))
-    model_LSTM.fit(data_train, labels_train, epochs=100, validation_data=(data_test, labels_test),
+    auc_callback = AUCCallback(validation_data=(data_val, labels_val))
+    model_LSTM.fit(data_train, labels_train, epochs=100, validation_data=(data_val, labels_val),
                    callbacks=[auc_callback])  # Adjust the epochs and batch_size as needed
 
     # Make predictions on the test set
@@ -171,7 +174,9 @@ def LSTM_classifier(data, labels, spec, network):
 
     try:
         # Attempt to open the file in 'append' mode
-        with open("RnnResults/RNN-Results.txt", 'a') as file:
+        if not os.path.exists("../data/output"):
+            os.makedirs("../../data/output")
+        with open("../../data/output/RNN-Results.txt", 'a') as file:
             # Append a line to the existing file
             file.write(
                 "{},{},{},{},{},{},{},{},{},{},{}".format(network, spec, loss, accuracy, auc, roc_LSTM,
@@ -190,10 +195,11 @@ def LSTM_classifier(data, labels, spec, network):
 
 
 if __name__ == "__main__":
-    networkList = ["mathoverflow.txt", "networkcoindash.txt", "networkiconomi.txt", "networkadex.txt", "networkdgd.txt",
-                   "networkbancor.txt", "networkcentra.txt", "networkcindicator.txt", "networkaeternity.txt",
-                   "networkaion.txt", "networkaragon.txt", "CollegeMsg.txt", "Reddit_B.tsv"]
+    # networkList = ["mathoverflow.txt", "networkcoindash.txt", "networkiconomi.txt", "networkadex.txt", "networkdgd.txt",
+    #                "networkbancor.txt", "networkcentra.txt", "networkcindicator.txt", "networkaeternity.txt",
+    #                "networkaion.txt", "networkaragon.txt", "CollegeMsg.txt", "Reddit_B.tsv"]
 
+    networkList = ["BAG.csv","DINO.csv","DOGE2.0.csv","EVERMOON.csv","SDEX.csv"]
     # can be choose from ["all","per_column","auto"]
     normalizer = "all"
     ablation = False
@@ -329,7 +335,8 @@ if __name__ == "__main__":
                         # auc_scores.append(LSTM_classifier(concatenated_arr_normalized, np_labels, "Combined_GraphPulse_ablation_{}".format(i), network))
                         auc_scores.append(
                             LSTM_classifier(ablation_data, np_labels, "GraphPulse_ablation_{}".format(i), network))
-
-            auc_scores.append(LSTM_classifier(concatenated_arr_normalized, np_labels, "GraphPulse", network))
+           
+            print(concatenated_arr_normalized.shape)
+            auc_scores.append(LSTM_classifier(concatenated_arr_normalized, np_labels, "Combined_TDA5", network))
 
            

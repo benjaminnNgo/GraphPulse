@@ -29,7 +29,7 @@ from util.graph_util import from_networkx
 
 class NetworkParser:
     # Path of the dataset folder
-    file_path = "../data/all_network/"
+    file_path = "../data/all_network/TimeSeries/"
     timeseries_file_path = "../data/all_network/TimeSeries/"
     timeseries_file_path_other = "../data/all_network/TimeSeries/Other/"
     timeWindow = [7]
@@ -67,11 +67,11 @@ class NetworkParser:
 
         # load each network file
         print("Processing {}".format(file))
-        selectedNetwork = pd.read_csv((self.file_path + file), sep=' ', names=["from", "to", "date", "value"])
-        selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date'], unit='s').dt.date
+        selectedNetwork = pd.read_csv((self.file_path + file))
+        selectedNetwork['timestamp'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
 
         # generate the label for this network
-        date_counts = selectedNetwork.groupby(['date']).count()
+        date_counts = selectedNetwork.groupby(['timestamp']).count()
         peak_count = date_counts['value'].max()
 
         # Calculate the sum of the value column for the last two dates
@@ -84,8 +84,8 @@ class NetworkParser:
         for timeFrame in self.timeWindow:
             print("\nProcessing Timeframe {} ".format(timeFrame))
             transactionGraph = nx.MultiDiGraph()
-            start_date = selectedNetwork['date'].min()
-            last_date_of_data = selectedNetwork['date'].max()
+            start_date = selectedNetwork['timestamp'].min()
+            last_date_of_data = selectedNetwork['timestamp'].max()
             # check if the network has more than 20 days of data
             if ((last_date_of_data - start_date).days < self.networkValidationDuration):
                 print(file + "Is not a valid network")
@@ -95,7 +95,7 @@ class NetworkParser:
             # select only the rows that fall within the first 7 days
             end_date = start_date + dt.timedelta(days=timeFrame)
             selectedNetworkInTimeFrame = selectedNetwork[
-                (selectedNetwork['date'] >= start_date) & (selectedNetwork['date'] < end_date)]
+                (selectedNetwork['timestamp'] >= start_date) & (selectedNetwork['timestamp'] < end_date)]
 
             # Populate graph with edges
             for item in selectedNetworkInTimeFrame.to_dict(orient="records"):
@@ -177,13 +177,12 @@ class NetworkParser:
         indx = 0
         maxIndx = 2
 
-        selectedNetwork = pd.read_csv((self.timeseries_file_path + file), sep=' ',
-                                      names=["from", "to", "date", "value"])
-        selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date'], unit='s').dt.date
+        selectedNetwork = pd.read_csv((self.timeseries_file_path + file))
+        selectedNetwork['timestamp'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
         selectedNetwork['value'] = selectedNetwork['value'].astype(float)
-        selectedNetwork = selectedNetwork.sort_values(by='date')
-        window_start_date = selectedNetwork['date'].min()
-        data_last_date = selectedNetwork['date'].max()
+        selectedNetwork = selectedNetwork.sort_values(by='timestamp')
+        window_start_date = selectedNetwork['timestamp'].min()
+        data_last_date = selectedNetwork['timestamp'].max()
 
         # print("\n {} Days OF Data -> {} ".format(file, (data_last_date - window_start_date).days ))
         # check if the network has more than 20 days of data
@@ -211,14 +210,14 @@ class NetworkParser:
             # select window data
             window_end_date = window_start_date + dt.timedelta(days=windowSize)
             selectedNetworkInGraphDataWindow = selectedNetwork[
-                (selectedNetwork['date'] >= window_start_date) & (selectedNetwork['date'] < window_end_date)]
+                (selectedNetwork['timestamp'] >= window_start_date) & (selectedNetwork['timestamp'] < window_end_date)]
 
             # select labeling data
             label_end_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap) + dt.timedelta(
                 days=lableWindowSize)
             label_start_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap)
             selectedNetworkInLbelingWindow = selectedNetwork[
-                (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
+                (selectedNetwork['timestamp'] >= label_start_date) & (selectedNetwork['timestamp'] < label_end_date)]
 
             # generating the label for this window
             # 1 -> Increading Transactions 0 -> Decreasing Transactions
@@ -329,13 +328,13 @@ class NetworkParser:
         indx = 0
         maxIndx = 2
 
-        selectedNetwork = pd.read_csv((self.timeseries_file_path_other + file), sep=' ', names=["from", "to", "date"])
+        selectedNetwork = pd.read_csv((self.timeseries_file_path_other + file))
         selectedNetwork['value'] = 1
-        selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date'], unit='s').dt.date
+        selectedNetwork['timestamp'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
         selectedNetwork['value'] = selectedNetwork['value'].astype(float)
-        selectedNetwork = selectedNetwork.sort_values(by='date')
-        window_start_date = selectedNetwork['date'].min() + dt.timedelta(days=2150)
-        data_last_date = selectedNetwork['date'].max()
+        selectedNetwork = selectedNetwork.sort_values(by='timestamp')
+        window_start_date = selectedNetwork['timestamp'].min() + dt.timedelta(days=2150)
+        data_last_date = selectedNetwork['timestamp'].max()
 
         # print("\n {} Days OF Data -> {} ".format(file, (data_last_date - window_start_date).days ))
         # check if the network has more than 20 days of data
@@ -365,14 +364,14 @@ class NetworkParser:
             # select window data
             window_end_date = window_start_date + dt.timedelta(days=windowSize)
             selectedNetworkInGraphDataWindow = selectedNetwork[
-                (selectedNetwork['date'] >= window_start_date) & (selectedNetwork['date'] < window_end_date)]
+                (selectedNetwork['timestamp'] >= window_start_date) & (selectedNetwork['timestamp'] < window_end_date)]
 
             # select labeling data
             label_end_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap) + dt.timedelta(
                 days=lableWindowSize)
             label_start_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap)
             selectedNetworkInLbelingWindow = selectedNetwork[
-                (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
+                (selectedNetwork['timestamp'] >= label_start_date) & (selectedNetwork['timestamp'] < label_end_date)]
 
             # generating the label for this window
             # 1 -> Increading Transactions 0 -> Decreasing Transactions
@@ -486,12 +485,12 @@ class NetworkParser:
             'LINK_SENTIMENT': 'value'
         }
         selectedNetwork.rename(columns=column_mapping, inplace=True)
-        selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date']).dt.date
+        selectedNetwork['timestamp'] = pd.to_datetime(selectedNetwork['timestamp']).dt.date
         selectedNetwork['value'] = selectedNetwork['value'].astype(float)
-        selectedNetwork = selectedNetwork.sort_values(by='date')
+        selectedNetwork = selectedNetwork.sort_values(by='timestamp')
         # reddit 800
-        window_start_date = selectedNetwork['date'].min() + dt.timedelta(days=800)
-        data_last_date = selectedNetwork['date'].max()
+        window_start_date = selectedNetwork['timestamp'].min() + dt.timedelta(days=800)
+        data_last_date = selectedNetwork['timestamp'].max()
 
         # print("\n {} Days OF Data -> {} ".format(file, (data_last_date - window_start_date).days ))
         # check if the network has more than 20 days of data
@@ -526,14 +525,14 @@ class NetworkParser:
             # select window data
             window_end_date = window_start_date + dt.timedelta(days=windowSize)
             selectedNetworkInGraphDataWindow = selectedNetwork[
-                (selectedNetwork['date'] >= window_start_date) & (selectedNetwork['date'] < window_end_date)]
+                (selectedNetwork['timestamp'] >= window_start_date) & (selectedNetwork['timestamp'] < window_end_date)]
 
             # select labeling data
             label_end_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap) + dt.timedelta(
                 days=lableWindowSize)
             label_start_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap)
             selectedNetworkInLbelingWindow = selectedNetwork[
-                (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
+                (selectedNetwork['timestamp'] >= label_start_date) & (selectedNetwork['timestamp'] < label_end_date)]
 
             # generating the label for this window
             # 1 -> Increading Transactions 0 -> Decreasing Transactions
@@ -630,7 +629,7 @@ class NetworkParser:
             with open(directory + "/RawGraph/" + file + "_" + "graph_" + str(indx), 'wb') as f:
                 pickle.dump(pygData, f)
 
-    def create_time_series_rnn_sequence(self, file):
+    def create_time_series_rnn_sequence(self, file,**kwargs):
         totalRnnSequenceData = list()
         totalRnnLabelData = list()
         print("Processing {}".format(file))
@@ -641,22 +640,26 @@ class NetworkParser:
         indx = 0
         maxIndx = 2
 
-        selectedNetwork = pd.read_csv((self.timeseries_file_path + file), sep=' ',
-                                      names=["from", "to", "date", "value"])
-        selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date'], unit='s').dt.date
+        # selectedNetwork = pd.read_csv((self.timeseries_file_path + file), sep=' ',
+        #                               names=["from", "to", "date", "value"])
+
+        selectedNetwork = pd.read_csv((self.timeseries_file_path + file))
+        print(selectedNetwork)
+
+        selectedNetwork['timestamp'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
         selectedNetwork['value'] = selectedNetwork['value'].astype(float)
-        selectedNetwork = selectedNetwork.sort_values(by='date')
-        window_start_date = selectedNetwork['date'].min()
-        data_last_date = selectedNetwork['date'].max()
+        selectedNetwork = selectedNetwork.sort_values(by='timestamp')
+        window_start_date = selectedNetwork['timestamp'].min()
+        data_last_date = selectedNetwork['timestamp'].max()
 
         print(f"{file} -- {window_start_date} -- {data_last_date}")
 
         print("\n {} Days OF Data -> {} ".format(file, (data_last_date - window_start_date).days))
         # check if the network has more than 20 days of data
-        if ((data_last_date - window_start_date).days < maxDuration):
-            print(file + "Is not a valid network")
-            shutil.move(self.file_path + file, self.file_path + "Invalid/" + file)
-            return
+        # if ((data_last_date - window_start_date).days < maxDuration):
+        #     print(file + "Is not a valid network")
+        #     shutil.move(self.file_path + file, self.file_path + "Invalid/" + file)
+        #     return
 
         # normalize the edge weights for the graph network {0-9}
         max_transfer = float(selectedNetwork['value'].max())
@@ -679,8 +682,8 @@ class NetworkParser:
             # select window data
             window_end_date = window_start_date + dt.timedelta(days=windowSize)
             selectedNetworkInGraphDataWindow = selectedNetwork[
-                (selectedNetwork['date'] >= window_start_date) & (
-                        selectedNetwork['date'] < window_end_date)]
+                (selectedNetwork['timestamp'] >= window_start_date) & (
+                        selectedNetwork['timestamp'] < window_end_date)]
 
             # select labeling data
             label_end_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(
@@ -688,7 +691,7 @@ class NetworkParser:
                 days=lableWindowSize)
             label_start_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap)
             selectedNetworkInLbelingWindow = selectedNetwork[
-                (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
+                (selectedNetwork['timestamp'] >= label_start_date) & (selectedNetwork['timestamp'] < label_end_date)]
 
             # generating the label for this window
             # 1 -> Increading Transactions 0 -> Decreasing Transactions
@@ -761,9 +764,9 @@ class NetworkParser:
 
                 node_features = node_features.drop_duplicates(subset=['nodeID'])
 
-            timeWindowSequence = self.process_TDA_extracted_rnn_sequence(selectedNetworkInGraphDataWindow, node_features)
+            # timeWindowSequence = self.process_TDA_extracted_rnn_sequence(selectedNetworkInGraphDataWindow, node_features,**kwargs)
 
-            # timeWindowSequenceRaw = self.processRawExtractedRnnSequence(selectedNetworkInGraphDataWindow, node_features)
+            timeWindowSequenceRaw = self.process_raw_extracted_rnn_sequence(selectedNetworkInGraphDataWindow, node_features)
             # result_list = []
             # first_key_tda = next(iter(timeWindowSequence))
             # tda_value = timeWindowSequence[first_key_tda]
@@ -778,7 +781,7 @@ class NetworkParser:
             #
             # totalRnnSequenceData.append({first_key_tda + "_" + first_key_raw : result_list})
 
-            totalRnnSequenceData.append(timeWindowSequence)
+            totalRnnSequenceData.append(timeWindowSequenceRaw)
             totalRnnLabelData.append(label)
             window_start_date = window_start_date + dt.timedelta(days=1)
 
@@ -787,7 +790,7 @@ class NetworkParser:
         directory = 'Sequence/' + str(file)
         if not os.path.exists(directory):
             os.makedirs(directory)
-        with open(directory + '/seq_tda_ablation.txt',
+        with open(directory + '/seq_raw.txt',
                   'wb') as file_in:
             pickle.dump(finalDict, file_in)
             file_in.close()
@@ -803,17 +806,17 @@ class NetworkParser:
         indx = 0
         maxIndx = 2
 
-        selectedNetwork = pd.read_csv((self.timeseries_file_path_other + file), sep=' ', names=["from", "to", "date"])
+        selectedNetwork = pd.read_csv((self.timeseries_file_path_other + file), sep=' ', names=["from", "to", "timestamp"])
         selectedNetwork['value'] = 1
-        selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date'], unit='s').dt.date
+        selectedNetwork['timestamp'] = pd.to_datetime(selectedNetwork['timestamp'], unit='s').dt.date
         selectedNetwork['value'] = selectedNetwork['value'].astype(float)
-        selectedNetwork = selectedNetwork.sort_values(by='date')
+        selectedNetwork = selectedNetwork.sort_values(by='timestamp')
         # math stack 2150
         if "math" in file:
-            window_start_date = selectedNetwork['date'].min() + dt.timedelta(2150)
+            window_start_date = selectedNetwork['timestamp'].min() + dt.timedelta(2150)
         else:
-            window_start_date = selectedNetwork['date'].min()
-        data_last_date = selectedNetwork['date'].max()
+            window_start_date = selectedNetwork['timestamp'].min()
+        data_last_date = selectedNetwork['timestamp'].max()
 
         print(f"{file} -- {window_start_date} -- {data_last_date}")
 
@@ -847,8 +850,8 @@ class NetworkParser:
             # select window data
             window_end_date = window_start_date + dt.timedelta(days=windowSize)
             selectedNetworkInGraphDataWindow = selectedNetwork[
-                (selectedNetwork['date'] >= window_start_date) & (
-                        selectedNetwork['date'] < window_end_date)]
+                (selectedNetwork['timestamp'] >= window_start_date) & (
+                        selectedNetwork['timestamp'] < window_end_date)]
 
             # select labeling data
             label_end_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(
@@ -856,7 +859,7 @@ class NetworkParser:
                 days=lableWindowSize)
             label_start_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap)
             selectedNetworkInLbelingWindow = selectedNetwork[
-                (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
+                (selectedNetwork['timestamp'] >= label_start_date) & (selectedNetwork['timestamp'] < label_end_date)]
 
             # generating the label for this window
             # 1 -> Increading Transactions 0 -> Decreasing Transactions
@@ -972,12 +975,12 @@ class NetworkParser:
             'LINK_SENTIMENT': 'value'
         }
         selectedNetwork.rename(columns=column_mapping, inplace=True)
-        selectedNetwork['date'] = pd.to_datetime(selectedNetwork['date']).dt.date
+        selectedNetwork['timestamp'] = pd.to_datetime(selectedNetwork['timestamp']).dt.date
         selectedNetwork['value'] = selectedNetwork['value'].astype(float)
-        selectedNetwork = selectedNetwork.sort_values(by='date')
+        selectedNetwork = selectedNetwork.sort_values(by='timestamp')
         # reddit 800
-        window_start_date = selectedNetwork['date'].min() + dt.timedelta(days=800)
-        data_last_date = selectedNetwork['date'].max()
+        window_start_date = selectedNetwork['timestamp'].min() + dt.timedelta(days=800)
+        data_last_date = selectedNetwork['timestamp'].max()
 
         print(f"{file} -- {window_start_date} -- {data_last_date}")
 
@@ -1011,8 +1014,8 @@ class NetworkParser:
             # select window data
             window_end_date = window_start_date + dt.timedelta(days=windowSize)
             selectedNetworkInGraphDataWindow = selectedNetwork[
-                (selectedNetwork['date'] >= window_start_date) & (
-                        selectedNetwork['date'] < window_end_date)]
+                (selectedNetwork['timestamp'] >= window_start_date) & (
+                        selectedNetwork['timestamp'] < window_end_date)]
 
             # select labeling data
             label_end_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(
@@ -1020,7 +1023,7 @@ class NetworkParser:
                 days=lableWindowSize)
             label_start_date = window_start_date + dt.timedelta(days=windowSize) + dt.timedelta(days=gap)
             selectedNetworkInLbelingWindow = selectedNetwork[
-                (selectedNetwork['date'] >= label_start_date) & (selectedNetwork['date'] < label_end_date)]
+                (selectedNetwork['timestamp'] >= label_start_date) & (selectedNetwork['timestamp'] < label_end_date)]
 
             # generating the label for this window
             # 1 -> Increading Transactions 0 -> Decreasing Transactions
@@ -1172,8 +1175,8 @@ class NetworkParser:
     def process_TDA_extracted_temporal_features(self, timeFrameData, originalGraph, nodeFeatures):
 
         # break the data to daily graphs
-        data_first_date = timeFrameData['date'].min()
-        data_last_date = timeFrameData['date'].max()
+        data_first_date = timeFrameData['timestamp'].min()
+        data_last_date = timeFrameData['timestamp'].max()
         numberOfDays = (data_last_date - data_first_date).days
         start_date = data_first_date
         # initiate the graph
@@ -1183,7 +1186,7 @@ class NetworkParser:
             print("Processing TDA Temporal Feature Extraction day {}".format(processingDay))
             daily_end_date = start_date + dt.timedelta(days=1)
             selectedDailyNetwork = timeFrameData[
-                (timeFrameData['date'] >= start_date) & (timeFrameData['date'] < daily_end_date)]
+                (timeFrameData['timestamp'] >= start_date) & (timeFrameData['timestamp'] < daily_end_date)]
 
             daily_node_features = pd.DataFrame()
 
@@ -1249,12 +1252,12 @@ class NetworkParser:
         # the graph has been repopulated with daily temporal features
         return originalGraphWithTemporalVector
 
-    def process_TDA_extracted_rnn_sequence(self, timeFrameData, nodeFeatures):
+    def process_TDA_extracted_rnn_sequence(self, timeFrameData, nodeFeatures,**kwargs):
 
         # break the data to daily graphs
         timeWindowSequence = list()
-        data_first_date = timeFrameData['date'].min()
-        data_last_date = timeFrameData['date'].max()
+        data_first_date = timeFrameData['timestamp'].min()
+        data_last_date = timeFrameData['timestamp'].max()
         numberOfDays = (data_last_date - data_first_date).days
         start_date = data_first_date
         # initiate the graph
@@ -1263,7 +1266,7 @@ class NetworkParser:
             # print("Processing TDA RNN sequential Extraction day {}".format(processingDay))
             daily_end_date = start_date + dt.timedelta(days=1)
             selectedDailyNetwork = timeFrameData[
-                (timeFrameData['date'] >= start_date) & (timeFrameData['date'] < daily_end_date)]
+                (timeFrameData['timestamp'] >= start_date) & (timeFrameData['timestamp'] < daily_end_date)]
 
             daily_node_features = pd.DataFrame()
 
@@ -1288,7 +1291,9 @@ class NetworkParser:
             try:
 
                 Xfilt = daily_node_features
+                
                 Xfilt = Xfilt.drop(columns=['nodeID'])
+
                 mapper = km.KeplerMapper()
                 scaler = MinMaxScaler(feature_range=(0, 1))
 
@@ -1310,13 +1315,19 @@ class NetworkParser:
                     # Iterate over the combinations and apply the process_combination function to each combination
                     # for per_overlap_indx in range(1, 11):
                     #     for n_cubes in range(2, 11):
-                    per_overlap = 0.05
-                    n_cubes = 10
-                    cls = 5
+                    per_overlap = kwargs.get('over_lap')
+                    n_cubes = kwargs.get('n_cube')
+                    cls = kwargs.get('cls')
+                    print(per_overlap,n_cubes,cls)
+                    # per_overlap = 0.05
+                    # n_cubes = 10
+                    # cls = 5
                     for albation_index in [1]:
                         # per_overlap = round(per_overlap_indx * 0.05, 2)
+                        print("Before")
                         result = pool.apply_async(self.TDA_process,
                                                   (mapper, lens, Xfilt, per_overlap, n_cubes, cls))
+                        print("After")
                         results.append(result)
 
                     # Retrieve the results as they become available
@@ -1394,8 +1405,8 @@ class NetworkParser:
 
         # break the data to daily graphs
         timeWindowSequence = list()
-        data_first_date = timeFrameData['date'].min()
-        data_last_date = timeFrameData['date'].max()
+        data_first_date = timeFrameData['timestamp'].min()
+        data_last_date = timeFrameData['timestamp'].max()
         numberOfDays = (data_last_date - data_first_date).days
         start_date = data_first_date
         # initiate the graph
@@ -1404,7 +1415,7 @@ class NetworkParser:
             # print("Processing TDA RNN sequential Extraction day {}".format(processingDay))
             daily_end_date = start_date + dt.timedelta(days=1)
             selectedDailyNetwork = timeFrameData[
-                (timeFrameData['date'] >= start_date) & (timeFrameData['date'] < daily_end_date)]
+                (timeFrameData['timestamp'] >= start_date) & (timeFrameData['timestamp'] < daily_end_date)]
             try:
                 number_of_nodes = pd.concat([selectedDailyNetwork['from'], selectedDailyNetwork['to']]).count()
                 number_of_edges = len(selectedDailyNetwork)
@@ -1548,4 +1559,31 @@ class NetworkParser:
 if __name__ == '__main__':
     np = NetworkParser()
     # np.graph_creation_handler_time_series()
-    np.create_time_series_rnn_sequence("networkadex.txt")
+    test_datasets = {
+        # "WOJAK":{"over_lap":0.2,"n_cube":2,"cls":5},
+        "DOGE2.0":{"over_lap":0.15,"n_cube":2,"cls":5},
+        "EVERMOON":{"over_lap":0.15,"n_cube":2,"cls":5},
+        # "QOM":{"over_lap":0.2,"n_cube":2,"cls":5},
+        "SDEX":{"over_lap":0.15,"n_cube":2,"cls":5},
+        # 'ETH2x-FLI':{"over_lap":0.05,"n_cube":10,"cls":5},
+        # "BEPRO":{"over_lap":0.2,"n_cube":2,"cls":5},
+        # "XCN":{"over_lap":0.2,"n_cube":2,"cls":5},
+        "BAG":{"over_lap":0.15,"n_cube":2,"cls":5},
+        # "TRAC":{"over_lap":0.2,"n_cube":2,"cls":5},
+        # "DERC":{"over_lap":0.2,"n_cube":2,"cls":5},
+        # "Metis":{"over_lap":0.15,"n_cube":2,"cls":5},
+        # # "REPv2":{"over_lap":0.2,"n_cube":2,"cls":5},
+        "DINO":{"over_lap":0.15,"n_cube":2,"cls":5},
+        # "HOICHI":{"over_lap":0.05,"n_cube":10,"cls":5},
+        # "MUTE":{"over_lap":0.15,"n_cube":2,"cls":5},
+        # "GLM":{"over_lap":0.2,"n_cube":2,"cls":5},
+        # "MIR":{"over_lap":0.2,"n_cube":2,"cls":5},
+        # "stkAAVE":{"over_lap":0.3,"n_cube":5,"cls":2},
+        # "ADX":{"over_lap":0.15,"n_cube":2,"cls":5}
+    }
+    # test__dict = test_datasets["HOICHI"]
+    for dataset in test_datasets:
+        tda_config = test_datasets[dataset]
+        np.create_time_series_rnn_sequence("{}.csv".format(dataset),**tda_config)
+
+    
